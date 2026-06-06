@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">ComposePractice</string>
+    <!--SignIn Screen-->
+    <string name="error_username">Please enter the valid Username</string>
+    <string name="error_password">Please enter the valid Password</string>
+
+    <!--SignUp Screen-->
+    <string name="error_password_mismatch">Password not match</string>
+</resources>
