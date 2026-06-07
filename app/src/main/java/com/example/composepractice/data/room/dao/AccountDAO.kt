@@ -1,4 +1,4 @@
-package com.example.composepractice.RoomDB.DAO
+package com.example.composepractice.data.room.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.example.composepractice.RoomDB.Model.AccountModel
+import com.example.composepractice.data.model.AccountModel
 import kotlinx.coroutines.flow.Flow
 
 @Dao

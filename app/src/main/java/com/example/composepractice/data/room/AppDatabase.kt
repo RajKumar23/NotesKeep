@@ -1,14 +1,14 @@
-package com.example.composepractice.RoomDB.Room
+package com.example.composepractice.data.room
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.example.composepractice.RoomDB.DAO.AccountDAO
-import com.example.composepractice.RoomDB.DAO.NotesDAO
-import com.example.composepractice.RoomDB.Model.AccountModel
-import com.example.composepractice.RoomDB.Model.NotesModel
+import com.example.composepractice.data.room.dao.AccountDAO
+import com.example.composepractice.data.room.dao.NotesDAO
+import com.example.composepractice.data.model.AccountModel
+import com.example.composepractice.data.model.NotesModel
 
 
 @Database(
@@ -17,19 +17,19 @@ import com.example.composepractice.RoomDB.Model.NotesModel
     exportSchema = false
 )
 @TypeConverters()
-abstract class MyRoomDB : RoomDatabase() {
+abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDAO(): AccountDAO
     abstract fun notesDAO(): NotesDAO
 
     companion object {
         @Volatile
-        private var INSTANCE: MyRoomDB? = null
+        private var INSTANCE: AppDatabase? = null
 
-        fun getDatabase(context: Context): MyRoomDB {
+        fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    MyRoomDB::class.java,
+                    AppDatabase::class.java,
                     "my_database"
                 ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
