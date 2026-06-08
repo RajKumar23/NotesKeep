@@ -21,11 +21,13 @@ interface AccountDAO {
     suspend fun getAccountByUserName(userName: String): AccountModel?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAccount(account: AccountModel)
+    suspend fun insertAccount(account: AccountModel): Long
+
+    @Update
+    suspend fun updateAccount(account: AccountModel)
 
     @Delete
     suspend fun deleteAccount(account: AccountModel)
 
-    @Update
-    suspend fun updateAccount(account: AccountModel)
+
 }

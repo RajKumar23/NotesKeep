@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,23 +32,28 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.composepractice.R
+import com.example.composepractice.ui.viewModel.AccountViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class SignInActivity : ComponentActivity() {
+
+    private val viewModel: AccountViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    LoginUI(
-                        name = "To Notes App!"
+                    SignInUI(
+                        name = "To Notes App!", viewModel = viewModel
                     )
                 }
-            }
-            /*ComposePracticeTheme {
+            }/*ComposePracticeTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     LoginUI(
                         name = "To Notes App!", modifier = Modifier.padding(innerPadding)
@@ -58,7 +65,7 @@ class SignInActivity : ComponentActivity() {
 }
 
 @Composable
-fun LoginUI(name: String, modifier: Modifier = Modifier) {
+fun SignInUI(name: String, modifier: Modifier = Modifier, viewModel: AccountViewModel) {
 
     val context = LocalContext.current
     val userNameState = androidx.compose.runtime.remember { mutableStateOf("") }
@@ -66,6 +73,8 @@ fun LoginUI(name: String, modifier: Modifier = Modifier) {
 
     val passwordState = androidx.compose.runtime.remember { mutableStateOf("") }
     val isPasswordInvalid = androidx.compose.runtime.remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = modifier
@@ -113,8 +122,7 @@ fun LoginUI(name: String, modifier: Modifier = Modifier) {
                         color = MaterialTheme.colorScheme.error
                     )
                 }
-            }
-        )
+            })
         OutlinedTextField(
             value = passwordState.value,
             onValueChange = {
@@ -147,32 +155,36 @@ fun LoginUI(name: String, modifier: Modifier = Modifier) {
         )
         Button(
             onClick = {
-                val intent = Intent(context, MainActivity::class.java)
-                context.startActivity(intent)
-                if (context is ComponentActivity) {
-                    context.finish()
-                }
-                /*if (validateTextField(
+                if (validateTextField(
                         userNameState.value, isUserNameInvalid
                     ) && validateTextField(
                         passwordState.value, isPasswordInvalid
                     )
                 ) {
-                    Toast.makeText(
-                        context, "Login Successful: ${userNameState.value}", Toast.LENGTH_SHORT
-                    ).show()
-                    val intent = Intent(context, MainActivity::class.java)
-                    context.startActivity(intent)
-                    if (context is ComponentActivity) {
-                        context.finish()
+                    scope.launch {
+                        val tableAccountDetails = viewModel.getAccountByUserName(
+                            userNameState.value
+                        )
+                        if (tableAccountDetails?.userName == userNameState.value) {
+                            val intent = Intent(context, MainActivity::class.java)
+                            context.startActivity(intent)
+                            if (context is ComponentActivity) {
+                                context.finish()
+                            }
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "No account exist, please create new account",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
-                }*/
-            },
-            modifier = Modifier
+                }
+            }, modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
         ) {
-            Text("Login")
+            Text("Sign In")
         }
         Text(
             text = "Don't have account? Sign up now!",

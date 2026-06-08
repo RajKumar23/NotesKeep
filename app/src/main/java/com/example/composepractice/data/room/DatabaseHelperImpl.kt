@@ -12,8 +12,14 @@ class DatabaseHelperImpl @Inject constructor(private val appDatabase: AppDatabas
     override fun getAllAccounts(): Flow<List<AccountModel>> =
         appDatabase.accountDAO().getAllAccounts()
 
-    override suspend fun insertAccount(account: AccountModel) =
+    override suspend fun getAccountByUserName(userName: String): AccountModel? =
+        appDatabase.accountDAO().getAccountByUserName(userName)
+
+    override suspend fun insertAccount(account: AccountModel): Long =
         appDatabase.accountDAO().insertAccount(account)
+
+    override suspend fun updateAccount(account: AccountModel) =
+        appDatabase.accountDAO().updateAccount(account)
 
     override suspend fun deleteAccount(account: AccountModel) =
         appDatabase.accountDAO().deleteAccount(account)

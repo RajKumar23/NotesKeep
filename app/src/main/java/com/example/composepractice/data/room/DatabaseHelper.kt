@@ -9,7 +9,11 @@ interface DatabaseHelper {
     //account related functions
     fun getAllAccounts(): Flow<List<AccountModel>>
 
-    suspend fun insertAccount(account: AccountModel)
+    suspend fun getAccountByUserName(userName: String): AccountModel?
+
+    suspend fun insertAccount(account: AccountModel): Long
+
+    suspend fun updateAccount(account: AccountModel)
 
     suspend fun deleteAccount(account: AccountModel)
 

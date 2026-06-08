@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,9 +36,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.composepractice.R
+import com.example.composepractice.data.model.AccountModel
+import com.example.composepractice.ui.viewModel.AccountViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 
+@AndroidEntryPoint
 class SignUpActivity : ComponentActivity() {
+
+    private val viewModel: AccountViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -44,7 +54,7 @@ class SignUpActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    SignUpScreen()
+                    SignUpScreen(viewModel = viewModel)
                 }
             }
         }
@@ -52,7 +62,7 @@ class SignUpActivity : ComponentActivity() {
 }
 
 @Composable
-fun SignUpScreen() {
+fun SignUpScreen(viewModel: AccountViewModel) {
     val context = LocalContext.current
 
     var userName by remember { mutableStateOf("") }
@@ -63,6 +73,8 @@ fun SignUpScreen() {
 
     var confirmPassword by remember { mutableStateOf("") }
     val isConfirmPasswordInvalid = remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -173,9 +185,24 @@ fun SignUpScreen() {
                     ) && validateTextFieldSignUpScreen(confirmPassword, isConfirmPasswordInvalid) &&
                     (password == confirmPassword).also { isConfirmPasswordInvalid.value = !it }
                 ) {
-                    Toast.makeText(
-                        context, "Sign Up Successful: $userName", Toast.LENGTH_SHORT
-                    ).show()
+                    scope.launch {
+                        val rowId = viewModel.insertAccount(
+                            AccountModel(
+                                userName = userName, password = password
+                            )
+                        )
+                        if (rowId > 0) {
+                            val intent = Intent(context, MainActivity::class.java)
+                            context.startActivity(intent)
+                            if (context is ComponentActivity) {
+                                context.finish()
+                            }
+                        } else {
+                            Toast.makeText(
+                                context, "Failed to create account", Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
                 }
             }, modifier = Modifier.fillMaxWidth()
         ) {
