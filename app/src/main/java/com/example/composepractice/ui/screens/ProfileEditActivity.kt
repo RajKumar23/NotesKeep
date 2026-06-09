@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,9 +34,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.composepractice.ui.viewModel.AccountViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
-
+@AndroidEntryPoint
 class ProfileEditActivity : ComponentActivity() {
+
+    private val viewModel: AccountViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -91,21 +97,35 @@ fun ProfileEditScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = {
+                        password = it
+                        isPasswordInvalid.value = false
+                    },
                     label = { Text("Password") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = isPasswordInvalid.value
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
+                    onValueChange = {
+                        confirmPassword = it
+                        isConfirmPasswordInvalid.value = false
+                    },
                     label = { Text("Confirm Password") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = isConfirmPasswordInvalid.value
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = {
-                        onUpdateProfile(password)
+                        isPasswordInvalid.value = password.isBlank()
+                        isConfirmPasswordInvalid.value =
+                            confirmPassword.isBlank() || password != confirmPassword
+
+                        if (!isPasswordInvalid.value && !isConfirmPasswordInvalid.value) {
+                            onUpdateProfile(password)
+                        }
                     }, modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Update Profile")
@@ -113,12 +133,13 @@ fun ProfileEditScreen(
             }
         }
 
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                onSignOut()
-            }
-            .padding(16.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onSignOut()
+                }
+                .padding(16.dp),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically) {
             Text(

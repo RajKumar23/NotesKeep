@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,8 +43,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.composepractice.ui.viewModel.AccountViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: AccountViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -51,8 +59,13 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
+                    val userName = viewModel.getUserNameSession().collectAsState(initial = "")
+
                     Scaffold { innerPadding ->
-                        MainScreen(modifier = Modifier.padding(innerPadding))
+                        MainScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            userName = userName.value
+                        )
                     }
                 }
             }
@@ -61,10 +74,10 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) { // Add modifier parameter
+fun MainScreen(modifier: Modifier = Modifier, userName: String) { // Add modifier parameter
     val context = LocalContext.current
     val itemList = remember {
-        mutableStateListOf<String>("Note 1", "Note 2", "Note 3", "Note 4")
+        mutableStateListOf("Note 1", "Note 2", "Note 3", "Note 4")
     }
     val favoriteList = remember {
         mutableStateListOf<String>()
@@ -94,10 +107,10 @@ fun MainScreen(modifier: Modifier = Modifier) { // Add modifier parameter
                 items(favoriteList) { item ->
                     Box(
                         modifier = Modifier.clickable {
-                                Toast.makeText(
-                                    context, "Favorites item clicked", Toast.LENGTH_SHORT
-                                ).show()
-                            }) {
+                            Toast.makeText(
+                                context, "Favorites item clicked", Toast.LENGTH_SHORT
+                            ).show()
+                        }) {
                         Text(
                             text = item.split(" ").last(),
                             modifier = Modifier
@@ -226,6 +239,8 @@ fun MainScreen(modifier: Modifier = Modifier) { // Add modifier parameter
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
+
+            Text(" Welcome $userName ")
 
             Text(
                 text = "+ Notes",

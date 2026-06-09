@@ -166,6 +166,7 @@ fun SignInUI(name: String, modifier: Modifier = Modifier, viewModel: AccountView
                             userNameState.value
                         )
                         if (tableAccountDetails?.userName == userNameState.value) {
+                            viewModel.saveUserNameSession(tableAccountDetails.userName)
                             val intent = Intent(context, MainActivity::class.java)
                             context.startActivity(intent)
                             if (context is ComponentActivity) {

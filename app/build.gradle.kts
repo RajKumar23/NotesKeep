@@ -77,4 +77,7 @@ dependencies {
 
     // Kotlin Extensions and Coroutines support for Room
     implementation(libs.androidx.room.ktx)
+
+    // Preferences DataStore (SharedPreferences like APIs)
+    implementation(libs.androidx.datastore.preferences)
 }

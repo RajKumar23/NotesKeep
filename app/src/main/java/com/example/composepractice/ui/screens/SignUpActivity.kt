@@ -26,7 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import com.example.composepractice.R
 import com.example.composepractice.data.model.AccountModel
 import com.example.composepractice.ui.viewModel.AccountViewModel
@@ -54,7 +54,28 @@ class SignUpActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    SignUpScreen(viewModel = viewModel)
+                    SignUpScreen(signUpProfile = { accountObject ->
+                        lifecycleScope.launch {
+                            val rowId = viewModel.insertAccount(
+                                AccountModel(
+                                    userName = accountObject.userName,
+                                    password = accountObject.password
+                                )
+                            )
+                            if (rowId > 0) {
+                                viewModel.saveUserNameSession(accountObject.userName)
+                                val intent = Intent(this@SignUpActivity, MainActivity::class.java)
+                                startActivity(intent)
+                                finish()
+                            } else {
+                                Toast.makeText(
+                                    this@SignUpActivity,
+                                    "Failed to create account",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    })
                 }
             }
         }
@@ -62,7 +83,7 @@ class SignUpActivity : ComponentActivity() {
 }
 
 @Composable
-fun SignUpScreen(viewModel: AccountViewModel) {
+fun SignUpScreen(signUpProfile: (AccountModel) -> Unit) {
     val context = LocalContext.current
 
     var userName by remember { mutableStateOf("") }
@@ -74,7 +95,7 @@ fun SignUpScreen(viewModel: AccountViewModel) {
     var confirmPassword by remember { mutableStateOf("") }
     val isConfirmPasswordInvalid = remember { mutableStateOf(false) }
 
-    val scope = rememberCoroutineScope()
+
 
     Column(
         modifier = Modifier
@@ -165,44 +186,21 @@ fun SignUpScreen(viewModel: AccountViewModel) {
                 if (isConfirmPasswordInvalid.value) {
                     Text(text = stringResource(R.string.error_password_mismatch))
                 }
-            }
-        )
+            })
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
-                /*isUserNameInvalid.value = userName.isBlank()
-                isPasswordInvalid.value = password.isBlank()
-                isConfirmPasswordInvalid.value = confirmPassword != password*/
-
                 if (validateTextFieldSignUpScreen(
-                        userName,
-                        isUserNameInvalid
+                        userName, isUserNameInvalid
                     ) && validateTextFieldSignUpScreen(
-                        password,
-                        isPasswordInvalid
-                    ) && validateTextFieldSignUpScreen(confirmPassword, isConfirmPasswordInvalid) &&
-                    (password == confirmPassword).also { isConfirmPasswordInvalid.value = !it }
+                        password, isPasswordInvalid
+                    ) && validateTextFieldSignUpScreen(
+                        confirmPassword, isConfirmPasswordInvalid
+                    ) && (password == confirmPassword).also { isConfirmPasswordInvalid.value = !it }
                 ) {
-                    scope.launch {
-                        val rowId = viewModel.insertAccount(
-                            AccountModel(
-                                userName = userName, password = password
-                            )
-                        )
-                        if (rowId > 0) {
-                            val intent = Intent(context, MainActivity::class.java)
-                            context.startActivity(intent)
-                            if (context is ComponentActivity) {
-                                context.finish()
-                            }
-                        } else {
-                            Toast.makeText(
-                                context, "Failed to create account", Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
+                    signUpProfile(AccountModel(userName = userName, password = password))
                 }
             }, modifier = Modifier.fillMaxWidth()
         ) {

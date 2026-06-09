@@ -4,12 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composepractice.data.model.AccountModel
 import com.example.composepractice.data.repository.AccountRepository
+import com.example.composepractice.utils.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class AccountViewModel @Inject constructor(private val accountRepository: AccountRepository) :
+class AccountViewModel @Inject constructor(
+    private val accountRepository: AccountRepository,
+    private val sessionManager: SessionManager
+) :
     ViewModel() {
 
     val allAccounts = accountRepository.getAccounts()
@@ -20,6 +25,14 @@ class AccountViewModel @Inject constructor(private val accountRepository: Accoun
 
     suspend fun insertAccount(account: AccountModel): Long {
         return accountRepository.insertAccount(account)
+    }
+
+    suspend fun saveUserNameSession(userName: String) {
+        sessionManager.saveUserName(userName)
+    }
+
+    fun getUserNameSession(): Flow<String> {
+        return sessionManager.userNameFlow
     }
 
     fun updateAccount(account: AccountModel) {
