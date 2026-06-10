@@ -2,6 +2,7 @@ package com.example.composepractice.ui.screens
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,6 +25,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Person3
 import androidx.compose.material3.HorizontalDivider
@@ -39,19 +41,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.composepractice.data.model.AccountModel
-import com.example.composepractice.ui.viewModel.AccountViewModel
+import com.example.composepractice.data.model.NotesModel
+import com.example.composepractice.ui.viewModel.NotesViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: AccountViewModel by viewModels()
+    private val viewModel: NotesViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,21 +66,47 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
                     val userId = viewModel.getUserIdSession().collectAsState(initial = -1)
+                    Log.e("TAG ", "onCreate: " + userId.value.toString())
 
-                    val userAccount by viewModel.userAccount.collectAsState()
-                    val allUserAccount by viewModel.allAccounts.collectAsState()
-                    LaunchedEffect(userId) {
+                    val notesList by viewModel.notes.collectAsState()
+                    val scope = rememberCoroutineScope()
+
+                    LaunchedEffect(userId.value) {
                         if (userId.value != -1) {
-                            viewModel.getAccountById(userId.value)
+                            viewModel.getAllNotes(userId.value)
                         }
                     }
 
                     Scaffold { innerPadding ->
                         MainScreen(
                             modifier = Modifier.padding(innerPadding),
-                            userName = userAccount?.userName ?: "Guest",
-                            allUserAccount
-                            //notes = notes
+                            notes = notesList,
+                            onDeleteNote = { noteId ->
+                                scope.launch {
+                                    val result = viewModel.deleteNote(noteId)
+                                    if (result > 0) {
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "Note deleted",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "Failed to delete note",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            },
+                            onEditNote = { note ->
+                                val intent = Intent(this@MainActivity, AddNotesActivity::class.java)
+                                intent.putExtra("NOTE_DATA", note)
+                                startActivity(intent)
+                            },
+                            onToggleFavorite = { note ->
+                                viewModel.toggleFavorite(note)
+                            }
                         )
                     }
                 }
@@ -85,15 +115,15 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-//, notes: List<NotesModel>
 @Composable
 fun MainScreen(
-    modifier: Modifier = Modifier, userName: String, allAccounts: List<AccountModel>
+    modifier: Modifier = Modifier,
+    notes: List<NotesModel>,
+    onDeleteNote: (noteId: Int) -> Unit = {},
+    onEditNote: (NotesModel) -> Unit = {},
+    onToggleFavorite: (NotesModel) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val itemList = remember {
-        mutableStateListOf("Note 1", "Note 2", "Note 3", "Note 4")
-    }
     val favoriteList = remember {
         mutableStateListOf<String>()
     }
@@ -149,7 +179,7 @@ fun MainScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (allAccounts.isEmpty()) {
+            if (notes.isEmpty()) {
                 item {
                     Text(
                         text = "No notes yet. Tap '+ Notes' to add one.",
@@ -162,7 +192,7 @@ fun MainScreen(
                     )
                 }
             } else {
-                itemsIndexed(allAccounts) { index, item ->
+                itemsIndexed(notes) { index, item ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -170,12 +200,12 @@ fun MainScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = item.userName,
+                                text = item.title,
                                 modifier = Modifier.padding(end = 8.dp),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(
-                                text = "Created Date with Time " + item.password,
+                                text = "Created Date with Time " + item.createdAt,
                                 modifier = Modifier.padding(end = 8.dp),
                                 style = MaterialTheme.typography.labelSmall
                             )
@@ -186,33 +216,17 @@ fun MainScreen(
                             modifier = Modifier
                                 .padding(horizontal = 8.dp)
                                 .clickable {
-                                    val editedNote = "$item (Edited)"
-                                    itemList[index] = editedNote/*if (favoriteList.contains(item)) {
-                                        favoriteList[favoriteList.indexOf(item)] = editedNote
-                                    }*/
-                                    Toast.makeText(
-                                        context, "Note updated", Toast.LENGTH_SHORT
-                                    ).show()
+                                    onEditNote(item)
                                 },
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Icon(
-                            imageVector = /*if (favoriteList.contains(item)) Icons.Default.Favorite else*/ Icons.Default.FavoriteBorder,
+                            imageVector = if (item.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "Favorite",
                             modifier = Modifier
                                 .padding(horizontal = 8.dp)
                                 .clickable {
-                                    /*if (!favoriteList.contains(item)) {
-                                        favoriteList.add(item)
-                                        Toast.makeText(
-                                            context, "Added to favorites", Toast.LENGTH_SHORT
-                                        ).show()
-                                    } else {
-                                        favoriteList.remove(item)
-                                        Toast.makeText(
-                                            context, "Removed from favorites", Toast.LENGTH_SHORT
-                                        ).show()
-                                    }*/
+                                    onToggleFavorite(item)
                                 },
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -222,16 +236,12 @@ fun MainScreen(
                             modifier = Modifier
                                 .padding(start = 8.dp)
                                 .clickable {
-                                    /*itemList.remove(item)
-                                    favoriteList.remove(item)*/
-                                    Toast.makeText(
-                                        context, "Note deleted", Toast.LENGTH_SHORT
-                                    ).show()
+                                    onDeleteNote(item.id)
                                 },
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
-                    if (index < itemList.size - 1) {
+                    if (index < notes.size - 1) {
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
                     }
                 }
@@ -253,7 +263,7 @@ fun MainScreen(
                 )
             }
 
-            Text(" Welcome $userName ")
+//            Text(" Welcome $userName ")
 
             Text(
                 text = "+ Notes",

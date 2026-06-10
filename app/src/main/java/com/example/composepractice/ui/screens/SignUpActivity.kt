@@ -57,14 +57,14 @@ class SignUpActivity : ComponentActivity() {
                 ) {
                     SignUpScreen(signUpProfile = { accountObject ->
                         lifecycleScope.launch {
-                            val rowId = viewModel.insertAccount(
+                            val returnCheck = viewModel.insertAccount(
                                 AccountModel(
                                     userName = accountObject.userName,
                                     password = accountObject.password
                                 )
                             )
-                            if (rowId > 0) {
-                                viewModel.saveUserIdSession(rowId.toInt())
+                            if (returnCheck > 0) {
+                                viewModel.saveUserIdSession(returnCheck.toInt())
                                 val intent = Intent(this@SignUpActivity, MainActivity::class.java)
                                 startActivity(intent)
                                 finish()

@@ -22,8 +22,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -68,11 +71,11 @@ class SignInActivity : ComponentActivity() {
 fun SignInUI(name: String, modifier: Modifier = Modifier, viewModel: AccountViewModel) {
 
     val context = LocalContext.current
-    val userNameState = androidx.compose.runtime.remember { mutableStateOf("") }
-    val isUserNameInvalid = androidx.compose.runtime.remember { mutableStateOf(false) }
+    var userNameState by remember { mutableStateOf("") }
+    val isUserNameInvalid = remember { mutableStateOf(false) }
 
-    val passwordState = androidx.compose.runtime.remember { mutableStateOf("") }
-    val isPasswordInvalid = androidx.compose.runtime.remember { mutableStateOf(false) }
+    var passwordState by remember { mutableStateOf("") }
+    val isPasswordInvalid = remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
 
@@ -93,9 +96,9 @@ fun SignInUI(name: String, modifier: Modifier = Modifier, viewModel: AccountView
             modifier = Modifier.padding(bottom = 32.dp)
         )
         OutlinedTextField(
-            value = userNameState.value,
+            value = userNameState,
             onValueChange = {
-                userNameState.value = it
+                userNameState = it
                 isUserNameInvalid.value = false
             },
             label = { Text("Enter Username") },
@@ -124,9 +127,9 @@ fun SignInUI(name: String, modifier: Modifier = Modifier, viewModel: AccountView
                 }
             })
         OutlinedTextField(
-            value = passwordState.value,
+            value = passwordState,
             onValueChange = {
-                passwordState.value = it
+                passwordState = it
                 isPasswordInvalid.value = false
             },
             label = { Text("Enter Password") },
@@ -156,14 +159,14 @@ fun SignInUI(name: String, modifier: Modifier = Modifier, viewModel: AccountView
         Button(
             onClick = {
                 if (validateTextField(
-                        userNameState.value, isUserNameInvalid
+                        userNameState, isUserNameInvalid
                     ) && validateTextField(
-                        passwordState.value, isPasswordInvalid
+                        passwordState, isPasswordInvalid
                     )
                 ) {
                     scope.launch {
                         val tableAccountDetails = viewModel.checkLogin(
-                            userNameState.value, passwordState.value
+                            userNameState, passwordState
                         )
                         if (tableAccountDetails != null) {
                             viewModel.saveUserIdSession(tableAccountDetails.id)

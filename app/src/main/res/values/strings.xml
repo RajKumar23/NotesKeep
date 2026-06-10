@@ -6,4 +6,8 @@
 
     <!--SignUp Screen-->
     <string name="error_password_mismatch">Password not match</string>
+
+    <!--Add Notes Screen-->
+    <string name="error_notes_title">Enter notes title</string>
+    <string name="error_notes_content">Enter notes content!</string>
 </resources>

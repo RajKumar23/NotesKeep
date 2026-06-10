@@ -4,19 +4,17 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
-import com.example.composepractice.data.room.dao.AccountDAO
-import com.example.composepractice.data.room.dao.NotesDAO
 import com.example.composepractice.data.model.AccountModel
 import com.example.composepractice.data.model.NotesModel
+import com.example.composepractice.data.room.dao.AccountDAO
+import com.example.composepractice.data.room.dao.NotesDAO
 
 
 @Database(
     entities = [AccountModel::class, NotesModel::class],
-    version = 2,
+    version = 1,
     exportSchema = false
 )
-@TypeConverters()
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDAO(): AccountDAO
     abstract fun notesDAO(): NotesDAO

@@ -32,16 +32,14 @@ class DatabaseHelperImpl @Inject constructor(private val appDatabase: AppDatabas
         appDatabase.accountDAO().deleteAccount(account)
 
     //notes related functions
-    override fun getAllNotes(): Flow<List<NotesModel>> = appDatabase.notesDAO().getAllNotes()
-
-    /*override fun getNotesByAccountId(accountId: Int): Flow<List<NotesModel>> =
-        appDatabase.notesDAO().getNotesByAccountId(accountId)*/
+    override fun getAllNotes(createdBy: Int): Flow<List<NotesModel>> =
+        appDatabase.notesDAO().getAllNotes(createdBy)
 
     override suspend fun getNoteById(id: Int): NotesModel = appDatabase.notesDAO().getNoteById(id)
 
-    override suspend fun insertNote(notes: NotesModel) = appDatabase.notesDAO().insertNote(notes)
+    override suspend fun insertNote(notes: NotesModel): Long = appDatabase.notesDAO().insertNote(notes)
 
-    override suspend fun deleteNote(notesId: Int) = appDatabase.notesDAO().deleteNote(notesId)
+    override suspend fun deleteNote(notesId: Int): Int = appDatabase.notesDAO().deleteNote(notesId)
 
     override suspend fun updateNote(note: NotesModel) = appDatabase.notesDAO().updateNote(note)
 }

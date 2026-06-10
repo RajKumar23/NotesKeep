@@ -22,15 +22,13 @@ interface DatabaseHelper {
     suspend fun deleteAccount(account: AccountModel)
 
     //notes related functions
-    fun getAllNotes(): Flow<List<NotesModel>>
-
-    /*fun getNotesByAccountId(accountId: Int): Flow<List<NotesModel>>*/
+    fun getAllNotes(createdBy: Int): Flow<List<NotesModel>>
 
     suspend fun getNoteById(id: Int): NotesModel
 
-    suspend fun insertNote(notes: NotesModel)
+    suspend fun insertNote(notes: NotesModel): Long
 
-    suspend fun deleteNote(notesId: Int)
+    suspend fun deleteNote(notesId: Int): Int
 
     suspend fun updateNote(note: NotesModel)
 }
