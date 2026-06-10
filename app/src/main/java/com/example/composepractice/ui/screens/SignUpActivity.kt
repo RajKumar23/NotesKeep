@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,7 +64,7 @@ class SignUpActivity : ComponentActivity() {
                                 )
                             )
                             if (rowId > 0) {
-                                viewModel.saveUserNameSession(accountObject.userName)
+                                viewModel.saveUserIdSession(rowId.toInt())
                                 val intent = Intent(this@SignUpActivity, MainActivity::class.java)
                                 startActivity(intent)
                                 finish()
@@ -75,7 +76,7 @@ class SignUpActivity : ComponentActivity() {
                                 ).show()
                             }
                         }
-                    })
+                    }, viewModel)
                 }
             }
         }
@@ -83,7 +84,7 @@ class SignUpActivity : ComponentActivity() {
 }
 
 @Composable
-fun SignUpScreen(signUpProfile: (AccountModel) -> Unit) {
+fun SignUpScreen(signUpProfile: (AccountModel) -> Unit, viewModel: AccountViewModel) {
     val context = LocalContext.current
 
     var userName by remember { mutableStateOf("") }
@@ -95,7 +96,7 @@ fun SignUpScreen(signUpProfile: (AccountModel) -> Unit) {
     var confirmPassword by remember { mutableStateOf("") }
     val isConfirmPasswordInvalid = remember { mutableStateOf(false) }
 
-
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -200,7 +201,17 @@ fun SignUpScreen(signUpProfile: (AccountModel) -> Unit) {
                         confirmPassword, isConfirmPasswordInvalid
                     ) && (password == confirmPassword).also { isConfirmPasswordInvalid.value = !it }
                 ) {
-                    signUpProfile(AccountModel(userName = userName, password = password))
+                    scope.launch {
+                        val tableAccountDetails = viewModel.getAccountByUserName(userName)
+                        if (tableAccountDetails != null)
+                            Toast.makeText(
+                                context,
+                                "User name already taken",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        else
+                            signUpProfile(AccountModel(userName = userName, password = password))
+                    }
                 }
             }, modifier = Modifier.fillMaxWidth()
         ) {

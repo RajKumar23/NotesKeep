@@ -162,21 +162,21 @@ fun SignInUI(name: String, modifier: Modifier = Modifier, viewModel: AccountView
                     )
                 ) {
                     scope.launch {
-                        val tableAccountDetails = viewModel.getAccountByUserName(
-                            userNameState.value
+                        val tableAccountDetails = viewModel.checkLogin(
+                            userNameState.value, passwordState.value
                         )
-                        if (tableAccountDetails?.userName == userNameState.value) {
-                            viewModel.saveUserNameSession(tableAccountDetails.userName)
+                        if (tableAccountDetails != null) {
+                            viewModel.saveUserIdSession(tableAccountDetails.id)
                             val intent = Intent(context, MainActivity::class.java)
                             context.startActivity(intent)
                             if (context is ComponentActivity) {
                                 context.finish()
                             }
                         } else {
+                            isUserNameInvalid.value = true
+                            isPasswordInvalid.value = true
                             Toast.makeText(
-                                context,
-                                "No account exist, please create new account",
-                                Toast.LENGTH_SHORT
+                                context, "Invalid username or password", Toast.LENGTH_SHORT
                             ).show()
                         }
                     }

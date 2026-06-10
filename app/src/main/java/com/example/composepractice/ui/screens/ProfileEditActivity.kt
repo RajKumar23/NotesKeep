@@ -26,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +53,9 @@ class ProfileEditActivity : ComponentActivity() {
                     ProfileEditScreen(
                         modifier = Modifier.padding(innerPadding),
                         onUpdateProfile = { password ->
+                            viewModel.updateAccount(
+                                password
+                            )
                             Toast.makeText(
                                 this@ProfileEditActivity,
                                 "New Password: $password",
@@ -75,7 +79,9 @@ class ProfileEditActivity : ComponentActivity() {
 
 @Composable
 fun ProfileEditScreen(
-    modifier: Modifier = Modifier, onUpdateProfile: (String) -> Unit, onSignOut: () -> Unit
+    modifier: Modifier = Modifier,
+    onUpdateProfile: (String) -> Unit,
+    onSignOut: () -> Unit
 ) {
 
     var password by remember { mutableStateOf("") }

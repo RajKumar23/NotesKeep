@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Person3
 import androidx.compose.material3.HorizontalDivider
@@ -35,7 +34,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -43,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.composepractice.data.model.AccountModel
 import com.example.composepractice.ui.viewModel.AccountViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -59,12 +61,22 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    val userName = viewModel.getUserNameSession().collectAsState(initial = "")
+                    val userId = viewModel.getUserIdSession().collectAsState(initial = -1)
+
+                    val userAccount by viewModel.userAccount.collectAsState()
+                    val allUserAccount by viewModel.allAccounts.collectAsState()
+                    LaunchedEffect(userId) {
+                        if (userId.value != -1) {
+                            viewModel.getAccountById(userId.value)
+                        }
+                    }
 
                     Scaffold { innerPadding ->
                         MainScreen(
                             modifier = Modifier.padding(innerPadding),
-                            userName = userName.value
+                            userName = userAccount?.userName ?: "Guest",
+                            allUserAccount
+                            //notes = notes
                         )
                     }
                 }
@@ -73,8 +85,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+//, notes: List<NotesModel>
 @Composable
-fun MainScreen(modifier: Modifier = Modifier, userName: String) { // Add modifier parameter
+fun MainScreen(
+    modifier: Modifier = Modifier, userName: String, allAccounts: List<AccountModel>
+) {
     val context = LocalContext.current
     val itemList = remember {
         mutableStateListOf("Note 1", "Note 2", "Note 3", "Note 4")
@@ -134,7 +149,7 @@ fun MainScreen(modifier: Modifier = Modifier, userName: String) { // Add modifie
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (itemList.isEmpty()) {
+            if (allAccounts.isEmpty()) {
                 item {
                     Text(
                         text = "No notes yet. Tap '+ Notes' to add one.",
@@ -147,7 +162,7 @@ fun MainScreen(modifier: Modifier = Modifier, userName: String) { // Add modifie
                     )
                 }
             } else {
-                itemsIndexed(itemList) { index, item ->
+                itemsIndexed(allAccounts) { index, item ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -155,12 +170,12 @@ fun MainScreen(modifier: Modifier = Modifier, userName: String) { // Add modifie
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = item,
+                                text = item.userName,
                                 modifier = Modifier.padding(end = 8.dp),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(
-                                text = "Created Date with Time",
+                                text = "Created Date with Time " + item.password,
                                 modifier = Modifier.padding(end = 8.dp),
                                 style = MaterialTheme.typography.labelSmall
                             )
@@ -172,10 +187,9 @@ fun MainScreen(modifier: Modifier = Modifier, userName: String) { // Add modifie
                                 .padding(horizontal = 8.dp)
                                 .clickable {
                                     val editedNote = "$item (Edited)"
-                                    itemList[index] = editedNote
-                                    if (favoriteList.contains(item)) {
+                                    itemList[index] = editedNote/*if (favoriteList.contains(item)) {
                                         favoriteList[favoriteList.indexOf(item)] = editedNote
-                                    }
+                                    }*/
                                     Toast.makeText(
                                         context, "Note updated", Toast.LENGTH_SHORT
                                     ).show()
@@ -183,12 +197,12 @@ fun MainScreen(modifier: Modifier = Modifier, userName: String) { // Add modifie
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Icon(
-                            imageVector = if (favoriteList.contains(item)) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            imageVector = /*if (favoriteList.contains(item)) Icons.Default.Favorite else*/ Icons.Default.FavoriteBorder,
                             contentDescription = "Favorite",
                             modifier = Modifier
                                 .padding(horizontal = 8.dp)
                                 .clickable {
-                                    if (!favoriteList.contains(item)) {
+                                    /*if (!favoriteList.contains(item)) {
                                         favoriteList.add(item)
                                         Toast.makeText(
                                             context, "Added to favorites", Toast.LENGTH_SHORT
@@ -198,7 +212,7 @@ fun MainScreen(modifier: Modifier = Modifier, userName: String) { // Add modifie
                                         Toast.makeText(
                                             context, "Removed from favorites", Toast.LENGTH_SHORT
                                         ).show()
-                                    }
+                                    }*/
                                 },
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -208,8 +222,8 @@ fun MainScreen(modifier: Modifier = Modifier, userName: String) { // Add modifie
                             modifier = Modifier
                                 .padding(start = 8.dp)
                                 .clickable {
-                                    itemList.remove(item)
-                                    favoriteList.remove(item)
+                                    /*itemList.remove(item)
+                                    favoriteList.remove(item)*/
                                     Toast.makeText(
                                         context, "Note deleted", Toast.LENGTH_SHORT
                                     ).show()
@@ -225,8 +239,7 @@ fun MainScreen(modifier: Modifier = Modifier, userName: String) { // Add modifie
         }
         HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
                 modifier = Modifier.padding(start = 16.dp, top = 16.dp), onClick = {

@@ -11,14 +11,20 @@ interface DatabaseHelper {
 
     suspend fun getAccountByUserName(userName: String): AccountModel?
 
+    suspend fun checkLogin(userName: String, password: String): AccountModel?
+
+    fun getAccountById(id: Int): Flow<AccountModel?>
+
     suspend fun insertAccount(account: AccountModel): Long
 
-    suspend fun updateAccount(account: AccountModel)
+    suspend fun updateAccount(id: Int, password: String)
 
     suspend fun deleteAccount(account: AccountModel)
 
     //notes related functions
     fun getAllNotes(): Flow<List<NotesModel>>
+
+    /*fun getNotesByAccountId(accountId: Int): Flow<List<NotesModel>>*/
 
     suspend fun getNoteById(id: Int): NotesModel
 

@@ -15,19 +15,23 @@ interface AccountDAO {
     fun getAllAccounts(): Flow<List<AccountModel>>
 
     @Query("SELECT * FROM account WHERE id = :id")
-    suspend fun getAccountById(id: Int): AccountModel?
+    fun getAccountById(id: Int): Flow<AccountModel?>
 
     @Query("SELECT * FROM account WHERE userName = :userName")
     suspend fun getAccountByUserName(userName: String): AccountModel?
 
+    @Query("SELECT * FROM account WHERE userName = :userName AND password = :password")
+    suspend fun checkLogin(userName: String, password: String): AccountModel?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAccount(account: AccountModel): Long
 
-    @Update
-    suspend fun updateAccount(account: AccountModel)
+    @Query("UPDATE account SET password = :password WHERE id = :id")
+    suspend fun updateAccount(id: Int, password: String)
 
     @Delete
     suspend fun deleteAccount(account: AccountModel)
 
-
+    @Query("DELETE FROM account")
+    suspend fun deleteAllAccounts()
 }

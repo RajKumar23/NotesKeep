@@ -15,17 +15,27 @@ class DatabaseHelperImpl @Inject constructor(private val appDatabase: AppDatabas
     override suspend fun getAccountByUserName(userName: String): AccountModel? =
         appDatabase.accountDAO().getAccountByUserName(userName)
 
+    override suspend fun checkLogin(
+        userName: String, password: String
+    ): AccountModel? = appDatabase.accountDAO().checkLogin(userName, password)
+
+    override fun getAccountById(id: Int): Flow<AccountModel?> =
+        appDatabase.accountDAO().getAccountById(id)
+
     override suspend fun insertAccount(account: AccountModel): Long =
         appDatabase.accountDAO().insertAccount(account)
 
-    override suspend fun updateAccount(account: AccountModel) =
-        appDatabase.accountDAO().updateAccount(account)
+    override suspend fun updateAccount(id: Int, password: String) =
+        appDatabase.accountDAO().updateAccount(id, password)
 
     override suspend fun deleteAccount(account: AccountModel) =
         appDatabase.accountDAO().deleteAccount(account)
 
     //notes related functions
     override fun getAllNotes(): Flow<List<NotesModel>> = appDatabase.notesDAO().getAllNotes()
+
+    /*override fun getNotesByAccountId(accountId: Int): Flow<List<NotesModel>> =
+        appDatabase.notesDAO().getNotesByAccountId(accountId)*/
 
     override suspend fun getNoteById(id: Int): NotesModel = appDatabase.notesDAO().getNoteById(id)
 
