@@ -21,19 +21,41 @@ class NotesViewModel @Inject constructor(
     private val _notes = MutableStateFlow<List<NotesModel>>(emptyList())
     val notes: StateFlow<List<NotesModel>> = _notes.asStateFlow()
 
+    private val _detailNote = MutableStateFlow<NotesModel?>(null)
+    val detailNote: StateFlow<NotesModel?> = _detailNote.asStateFlow()
+
+    private val _favoriteNotes = MutableStateFlow<List<NotesModel>>(emptyList())
+    val favoriteNotes: StateFlow<List<NotesModel>> = _favoriteNotes.asStateFlow()
+
     fun getUserIdSession(): Flow<Int> {
         return sessionManager.userIdFlow
     }
 
-    fun getAllNotes(createdBy: Int) {
+    fun getAllNotes() {
         viewModelScope.launch {
-            notesRepository.getAllNotes(createdBy).collect { notesList ->
-                _notes.value = notesList
+            sessionManager.userIdFlow.collect { createdBy ->
+                notesRepository.getAllNotes(createdBy).collect { notesList ->
+                    _notes.value = notesList
+                }
             }
         }
     }
 
-    suspend fun getNoteById(id: Int) = notesRepository.getNoteById(id)
+    fun getFavoriteNotesByUser() {
+        viewModelScope.launch {
+            sessionManager.userIdFlow.collect { createdBy ->
+                notesRepository.getFavoriteNotesByUser(createdBy).collect { favoriteNotes ->
+                    _favoriteNotes.value = favoriteNotes
+                }
+            }
+        }
+    }
+
+    fun getNoteById(id: Int) {
+        viewModelScope.launch {
+            _detailNote.value = notesRepository.getNoteById(id)
+        }
+    }
 
     suspend fun insertNote(notes: NotesModel): Long =
         notesRepository.insertNote(notes)
@@ -43,6 +65,11 @@ class NotesViewModel @Inject constructor(
         viewModelScope.launch {
             notesRepository.updateNote(note)
         }
+    }
+
+
+    suspend fun toggleFavorite(id: Int) {
+        notesRepository.toggleFavorite(id)
     }
 
     suspend fun deleteNote(notesId: Int): Int {

@@ -8,11 +8,16 @@ import javax.inject.Inject
 class NotesRepository @Inject constructor(private val dbHelper: DatabaseHelper) {
     fun getAllNotes(createdBy: Int): Flow<List<NotesModel>> = dbHelper.getAllNotes(createdBy)
 
+    fun getFavoriteNotesByUser(createdBy: Int): Flow<List<NotesModel>> =
+        dbHelper.getFavoriteNotesByUser(createdBy)
+
     suspend fun getNoteById(id: Int): NotesModel = dbHelper.getNoteById(id)
 
     suspend fun insertNote(notes: NotesModel): Long = dbHelper.insertNote(notes)
 
-    suspend fun deleteNote(notesId: Int): Int = dbHelper.deleteNote(notesId)
-
     suspend fun updateNote(note: NotesModel) = dbHelper.updateNote(note)
+
+    suspend fun toggleFavorite(id: Int) = dbHelper.toggleFavorite(id)
+
+    suspend fun deleteNote(notesId: Int): Int = dbHelper.deleteNote(notesId)
 }

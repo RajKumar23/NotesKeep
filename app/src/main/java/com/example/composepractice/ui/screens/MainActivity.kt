@@ -24,10 +24,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Person3
+import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,11 +36,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +48,9 @@ import com.example.composepractice.data.model.NotesModel
 import com.example.composepractice.ui.viewModel.NotesViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -69,26 +69,33 @@ class MainActivity : ComponentActivity() {
                     Log.e("TAG ", "onCreate: " + userId.value.toString())
 
                     val notesList by viewModel.notes.collectAsState()
+                    val favouriteNotesList by viewModel.favoriteNotes.collectAsState()
                     val scope = rememberCoroutineScope()
 
-                    LaunchedEffect(userId.value) {
-                        if (userId.value != -1) {
-                            viewModel.getAllNotes(userId.value)
-                        }
-                    }
+                    viewModel.getAllNotes()
+                    viewModel.getFavoriteNotesByUser()
 
                     Scaffold { innerPadding ->
                         MainScreen(
                             modifier = Modifier.padding(innerPadding),
                             notes = notesList,
+                            favoriteNotes = favouriteNotesList,
+                            onEditNote = { id ->
+                                val intent = Intent(this@MainActivity, AddNotesActivity::class.java)
+                                intent.putExtra("NOTE_ID", id)
+                                startActivity(intent)
+                            },
+                            onToggleFavorite = { id ->
+                                scope.launch {
+                                    viewModel.toggleFavorite(id)
+                                }
+                            },
                             onDeleteNote = { noteId ->
                                 scope.launch {
                                     val result = viewModel.deleteNote(noteId)
                                     if (result > 0) {
                                         Toast.makeText(
-                                            this@MainActivity,
-                                            "Note deleted",
-                                            Toast.LENGTH_SHORT
+                                            this@MainActivity, "Note deleted", Toast.LENGTH_SHORT
                                         ).show()
                                     } else {
                                         Toast.makeText(
@@ -98,16 +105,7 @@ class MainActivity : ComponentActivity() {
                                         ).show()
                                     }
                                 }
-                            },
-                            onEditNote = { note ->
-                                val intent = Intent(this@MainActivity, AddNotesActivity::class.java)
-                                intent.putExtra("NOTE_DATA", note)
-                                startActivity(intent)
-                            },
-                            onToggleFavorite = { note ->
-                                viewModel.toggleFavorite(note)
-                            }
-                        )
+                            })
                     }
                 }
             }
@@ -119,65 +117,19 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(
     modifier: Modifier = Modifier,
     notes: List<NotesModel>,
-    onDeleteNote: (noteId: Int) -> Unit = {},
-    onEditNote: (NotesModel) -> Unit = {},
-    onToggleFavorite: (NotesModel) -> Unit = {}
+    favoriteNotes: List<NotesModel>,
+    onToggleFavorite: (noteId: Int) -> Unit = {},
+    onEditNote: (noteId: Int) -> Unit = {},
+    onDeleteNote: (noteId: Int) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val favoriteList = remember {
-        mutableStateListOf<String>()
-    }
 
     Column(modifier = modifier.fillMaxSize()) {
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = if (favoriteList.isEmpty()) Arrangement.Center else Arrangement.spacedBy(
-                8.dp
-            ),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        ) {
-            if (favoriteList.isEmpty()) {
-                item {
-                    Text(
-                        text = "No favourite notes found.",
-                        modifier = Modifier
-                            .fillParentMaxWidth()
-                            .padding(top = 32.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                items(favoriteList) { item ->
-                    Box(
-                        modifier = Modifier.clickable {
-                            Toast.makeText(
-                                context, "Favorites item clicked", Toast.LENGTH_SHORT
-                            ).show()
-                        }) {
-                        Text(
-                            text = item.split(" ").last(),
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.secondaryContainer,
-                                    MaterialTheme.shapes.medium
-                                )
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
-
-                }
-            }
-        }
-        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             if (notes.isEmpty()) {
                 item {
@@ -196,37 +148,45 @@ fun MainScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(10.dp)
+                            .padding(vertical = 5.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(5.dp)
+                                .clickable {
+                                    onEditNote(item.id)
+                                }) {
                             Text(
                                 text = item.title,
                                 modifier = Modifier.padding(end = 8.dp),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(
-                                text = "Created Date with Time " + item.createdAt,
+                                text = formatMillis(item.createdAt),
                                 modifier = Modifier.padding(end = 8.dp),
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
                         Icon(
-                            imageVector = Icons.Default.Edit,
+                            imageVector = Icons.Default.RemoveRedEye,
                             contentDescription = "Edit",
                             modifier = Modifier
                                 .padding(horizontal = 8.dp)
+                                .align(Alignment.CenterVertically)
                                 .clickable {
-                                    onEditNote(item)
+                                    onEditNote(item.id)
                                 },
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                         Icon(
                             imageVector = if (item.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "Favorite",
                             modifier = Modifier
                                 .padding(horizontal = 8.dp)
+                                .align(Alignment.CenterVertically)
                                 .clickable {
-                                    onToggleFavorite(item)
+                                    onToggleFavorite(item.id)
                                 },
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -235,6 +195,7 @@ fun MainScreen(
                             contentDescription = "Delete",
                             modifier = Modifier
                                 .padding(start = 8.dp)
+                                .align(Alignment.CenterVertically)
                                 .clickable {
                                     onDeleteNote(item.id)
                                 },
@@ -242,17 +203,69 @@ fun MainScreen(
                         )
                     }
                     if (index < notes.size - 1) {
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 0.dp))
                     }
                 }
             }
         }
         HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = if (favoriteNotes.isEmpty()) Arrangement.Center else Arrangement.spacedBy(
+                8.dp
+            ),
+            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+        ) {
+            if (favoriteNotes.isEmpty()) {
+                item {
+                    Text(
+                        text = "No favourite notes found.",
+                        modifier = Modifier
+                            .fillParentMaxWidth()
+                            .padding(top = 32.dp),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                items(favoriteNotes) { item ->
+                    Box(
+                        modifier = Modifier.clickable {
+                            onEditNote(item.id)
+                        }) {
+                        Column(
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.secondaryContainer,
+                                    MaterialTheme.shapes.medium
+                                )
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = item.title,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Text(
+                                text = formatMillis(item.createdAt),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.outlineVariant)
         Row(
-            modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                modifier = Modifier.padding(start = 16.dp, top = 16.dp), onClick = {
+                modifier = Modifier.padding(start = 16.dp, top = 5.dp), onClick = {
                     val intent = Intent(context, ProfileEditActivity::class.java)
                     context.startActivity(intent)
                 }) {
@@ -268,6 +281,7 @@ fun MainScreen(
             Text(
                 text = "+ Notes",
                 modifier = Modifier
+                    .padding(end = 16.dp)
                     .fillMaxWidth()
                     .clickable {
                         /*val newId = itemList.size + 1
@@ -280,11 +294,17 @@ fun MainScreen(
                         val intent = Intent(context, AddNotesActivity::class.java)
                         context.startActivity(intent)
                     }
-                    .padding(16.dp),
+                    .padding(5.dp),
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.End,
             )
         }
 
     }
+}
+
+fun formatMillis(millis: Long): String {
+    val formatter = DateTimeFormatter.ofPattern("dd/MMM/yyyy, hh:mm a")
+    return Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        .format(formatter)
 }

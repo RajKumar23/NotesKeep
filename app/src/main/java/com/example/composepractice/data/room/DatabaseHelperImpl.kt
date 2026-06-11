@@ -35,11 +35,19 @@ class DatabaseHelperImpl @Inject constructor(private val appDatabase: AppDatabas
     override fun getAllNotes(createdBy: Int): Flow<List<NotesModel>> =
         appDatabase.notesDAO().getAllNotes(createdBy)
 
+    override fun getFavoriteNotesByUser(createdBy: Int): Flow<List<NotesModel>> =
+        appDatabase.notesDAO().getFavoriteNotesByUser(createdBy)
+
     override suspend fun getNoteById(id: Int): NotesModel = appDatabase.notesDAO().getNoteById(id)
 
-    override suspend fun insertNote(notes: NotesModel): Long = appDatabase.notesDAO().insertNote(notes)
+    override suspend fun insertNote(notes: NotesModel): Long =
+        appDatabase.notesDAO().insertNote(notes)
 
     override suspend fun deleteNote(notesId: Int): Int = appDatabase.notesDAO().deleteNote(notesId)
 
     override suspend fun updateNote(note: NotesModel) = appDatabase.notesDAO().updateNote(note)
+
+    override suspend fun toggleFavorite(id: Int) {
+        appDatabase.notesDAO().toggleFavorite(id)
+    }
 }

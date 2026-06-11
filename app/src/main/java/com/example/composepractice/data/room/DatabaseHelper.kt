@@ -15,9 +15,13 @@ interface DatabaseHelper {
 
     fun getAccountById(id: Int): Flow<AccountModel?>
 
+    fun getFavoriteNotesByUser(createdBy: Int): Flow<List<NotesModel>>
+
     suspend fun insertAccount(account: AccountModel): Long
 
     suspend fun updateAccount(id: Int, password: String)
+
+    suspend fun toggleFavorite(id: Int)
 
     suspend fun deleteAccount(account: AccountModel)
 

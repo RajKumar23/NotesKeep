@@ -17,6 +17,15 @@ interface NotesDAO {
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getNoteById(id: Int): NotesModel
 
+    @Query("SELECT * FROM notes WHERE isFavorite = 1 AND createdBy = :createdBy ORDER BY id ASC")
+    fun getFavoriteNotesByUser(createdBy: Int): Flow<List<NotesModel>>
+
+    @Query("SELECT * FROM notes WHERE (title LIKE :searchQuery OR content LIKE :searchQuery) AND createdBy = :createdBy")
+    fun searchNotesByUser(searchQuery: String, createdBy: Int): Flow<List<NotesModel>>
+
+    @Query("SELECT * FROM notes WHERE title LIKE :searchQuery OR content LIKE :searchQuery")
+    fun searchNotes(searchQuery: String): Flow<List<NotesModel>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNote(note: NotesModel): Long
 
@@ -26,6 +35,12 @@ interface NotesDAO {
     @Update
     suspend fun updateNote(note: NotesModel)
 
+    @Query("UPDATE notes SET isFavorite = NOT isFavorite WHERE id = :id")
+    suspend fun toggleFavorite(id: Int)
+
     @Query("DELETE FROM notes")
     suspend fun deleteAllNotes()
+
+    @Query("DELETE FROM notes WHERE createdBy = :userId")
+    suspend fun deleteNotesByUser(userId: Int)
 }
