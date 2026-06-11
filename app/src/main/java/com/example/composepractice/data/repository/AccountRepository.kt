@@ -19,5 +19,10 @@ class AccountRepository @Inject constructor(private val dbHelper: DatabaseHelper
 
     suspend fun updateAccount(id: Int, password: String) = dbHelper.updateAccount(id, password)
 
-    suspend fun deleteAccount(account: AccountModel) = dbHelper.deleteAccount(account)
+    suspend fun deleteNotesByUser(createdBy: Int) = dbHelper.deleteNotesByUser(createdBy)
+
+    suspend fun deleteAccount(id: Int) {
+        dbHelper.deleteNotesByUser(id)
+        dbHelper.deleteAccount(id)
+    }
 }

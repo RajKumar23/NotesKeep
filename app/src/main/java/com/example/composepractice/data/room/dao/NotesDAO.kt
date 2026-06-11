@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotesDAO {
+
     @Query("SELECT * FROM notes WHERE createdBy = :createdBy ORDER BY id ASC")
     fun getAllNotes(createdBy: Int): Flow<List<NotesModel>>
 
@@ -41,6 +42,6 @@ interface NotesDAO {
     @Query("DELETE FROM notes")
     suspend fun deleteAllNotes()
 
-    @Query("DELETE FROM notes WHERE createdBy = :userId")
-    suspend fun deleteNotesByUser(userId: Int)
+    @Query("DELETE FROM notes WHERE createdBy = :createdBy")
+    suspend fun deleteNotesByUser(createdBy: Int): Int
 }

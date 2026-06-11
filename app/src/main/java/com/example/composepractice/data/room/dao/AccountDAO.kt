@@ -1,11 +1,9 @@
 package com.example.composepractice.data.room.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 import com.example.composepractice.data.model.AccountModel
 import kotlinx.coroutines.flow.Flow
 
@@ -29,8 +27,8 @@ interface AccountDAO {
     @Query("UPDATE account SET password = :password WHERE id = :id")
     suspend fun updateAccount(id: Int, password: String)
 
-    @Delete
-    suspend fun deleteAccount(account: AccountModel)
+    @Query("DELETE FROM account WHERE id = :id")
+    suspend fun deleteAccount(id: Int): Int
 
     @Query("DELETE FROM account")
     suspend fun deleteAllAccounts()

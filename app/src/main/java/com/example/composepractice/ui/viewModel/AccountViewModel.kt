@@ -66,9 +66,14 @@ class AccountViewModel @Inject constructor(
         }
     }
 
-    fun deleteAccount(account: AccountModel) {
+    fun deleteNotesByUser(createdBy: Int){
         viewModelScope.launch {
-            accountRepository.deleteAccount(account)
+            accountRepository.deleteNotesByUser(createdBy)
+        }
+    }
+    fun deleteAccount(id: Int) {
+        viewModelScope.launch {
+            accountRepository.deleteAccount(id)
         }
     }
 }

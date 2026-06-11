@@ -21,9 +21,7 @@ interface DatabaseHelper {
 
     suspend fun updateAccount(id: Int, password: String)
 
-    suspend fun toggleFavorite(id: Int)
-
-    suspend fun deleteAccount(account: AccountModel)
+    suspend fun deleteAccount(id: Int): Int
 
     //notes related functions
     fun getAllNotes(createdBy: Int): Flow<List<NotesModel>>
@@ -32,7 +30,11 @@ interface DatabaseHelper {
 
     suspend fun insertNote(notes: NotesModel): Long
 
+    suspend fun updateNote(note: NotesModel)
+
+    suspend fun toggleFavorite(id: Int)
+
     suspend fun deleteNote(notesId: Int): Int
 
-    suspend fun updateNote(note: NotesModel)
+    suspend fun deleteNotesByUser(createdBy: Int): Int
 }

@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.composepractice.ui.viewModel.AccountViewModel
@@ -49,6 +52,8 @@ class ProfileEditActivity : ComponentActivity() {
             Surface(
                 modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
             ) {
+                val userId = viewModel.getUserIdSession().collectAsState(initial = -1)
+
                 Scaffold { innerPadding ->
                     ProfileEditScreen(
                         modifier = Modifier.padding(innerPadding),
@@ -63,6 +68,23 @@ class ProfileEditActivity : ComponentActivity() {
                             ).show()
                             finish()
                         },
+                        onClearNotes = {
+                            viewModel.deleteNotesByUser(userId.value)
+                            Toast.makeText(
+                                this@ProfileEditActivity,
+                                "All notes cleared",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                        onDeleteAccount = {
+                            viewModel.deleteAccount(userId.value)
+                            val intent =
+                                Intent(this@ProfileEditActivity, SignInActivity::class.java)
+                            intent.flags =
+                                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            startActivity(intent)
+                            finish()
+                        },
                         onSignOut = {
                             val intent =
                                 Intent(this@ProfileEditActivity, SignInActivity::class.java)
@@ -70,7 +92,8 @@ class ProfileEditActivity : ComponentActivity() {
                                 Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                             startActivity(intent)
                             finish()
-                        })
+                        },
+                    )
                 }
             }
         }
@@ -81,6 +104,8 @@ class ProfileEditActivity : ComponentActivity() {
 fun ProfileEditScreen(
     modifier: Modifier = Modifier,
     onUpdateProfile: (String) -> Unit,
+    onClearNotes: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit
 ) {
 
@@ -142,12 +167,55 @@ fun ProfileEditScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable {
-                    onSignOut()
-                }
-                .padding(16.dp),
+                .clickable { onClearNotes() }
+                .padding(end = 16.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically) {
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Clear Notes",
+                style = MaterialTheme.typography.headlineSmall,
+                textAlign = TextAlign.End,
+                color = Color.Red
+            )
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            Icon(
+                imageVector = Icons.Default.EditNote,
+                contentDescription = "Delete Account",
+                tint = Color.Red
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onDeleteAccount() }
+                .padding(end = 16.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Delete Account",
+                style = MaterialTheme.typography.headlineSmall,
+                textAlign = TextAlign.End,
+                color = Color.Red
+            )
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Delete Account",
+                tint = Color.Red
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onSignOut() }
+                .padding(end = 16.dp, bottom = 16.dp),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = "Sign out",
                 style = MaterialTheme.typography.headlineSmall,
